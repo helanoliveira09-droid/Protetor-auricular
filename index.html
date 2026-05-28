@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Controle de Protetores Auriculares</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #181c27;
+            --surface2: #1e2334;
+            --border: #2a2f42;
+            --accent: #4f7cff;
+            --accent2: #00d4aa;
+            --warn: #f5a623;
+            --danger: #ff4d6d;
+            --success: #00c97a;
+            --text: #e8ecf5;
+            --text-muted: #6b7391;
+            --text-dim: #9aa3be;
+            --radius: 8px;
+            --radius-lg: 14px;
+            --font: 'IBM Plex Sans', sans-serif;
+            --mono: 'IBM Plex Mono', monospace;
+            --shadow: 0 4px 24px rgba(0,0,0,0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ===== HEADER ===== */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .header h1 span {
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .header-meta {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .meta-item {
+            text-align: right;
+        }
+
+        .meta-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--text-muted);
+        }
+
+        .meta-value {
+            font-family: var(--mono);
+            font-size: 14px;
+            color: var(--accent2);
+            margin-top: 2px;
+        }
+
+        /* ===== KPI CARDS ===== */
+        .kpi-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .kpi-card {
+            background: var(--surface);
+            padding: 20px 24px;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.2s;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: var(--accent);
+        }
+
+        .kpi-card.green::before { background: var(--success); }
+        .kpi-card.yellow::before { background: var(--warn); }
+        .kpi-card.red::before { background: var(--danger); }
+        .kpi-card.blue::before { background: var(--accent); }
+
+        .kpi-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .kpi-value {
+            font-family: var(--mono);
+            font-size: 38px;
+            font-weight: 500;
+            line-height: 1;
+        }
+
+        .kpi-card.green .kpi-value { color: var(--success); }
+        .kpi-card.yellow .kpi-value { color: var(--warn); }
+        .kpi-card.red .kpi-value { color: var(--danger); }
+        .kpi-card.blue .kpi-value { color: var(--accent); }
+
+        .kpi-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* ===== TABS ===== */
+        .tabs {
+            display: flex;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            padding: 14px 20px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover { color: var(--text); }
+
+        .tab-btn.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        /* ===== TAB CONTENT ===== */
+        .tab-content { display: none; padding: 28px 32px; min-height: 520px; }
+        .tab-content.active { display: block; }
+
+        /* ===== TOOLBAR ===== */
+        .toolbar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 240px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 9px 14px 9px 38px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: var(--font);
+            font-size: 13px;
+            color: var(--text);
+            transition: border-color 0.2s;
+        }
+
+        .search-box input::placeholder { color: var(--text-muted); }
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: var(--radius);
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover { background: #3d6aee; transform: translateY(-1px); }
+
+        .btn-success {
+            background: var(--success);
+            color: #001a10;
+        }
+        .btn-success:hover { background: #00b86e; transform: translateY(-1px); }
+
+        .btn-secondary {
+            background: var(--surface2);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--border); }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
+
+        .btn-warning {
+            background: var(--warn);
+            color: #1a0f00;
+        }
+        .btn-warning:hover { background: #e09620; }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        /* ===== TABLE ===== */
+        .table-wrap {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .table-wrap table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table-wrap thead {
+            background: var(--surface2);
+        }
+
+        .table-wrap th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .table-wrap td {
+            padding: 13px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-dim);
+        }
+
+        .table-wrap tr:last-child td { border-bottom: none; }
+        .table-wrap tbody tr:hover td { background: var(--surface2); color: var(--text); }
+
+        .td-main { color: var(--text) !important; font-weight: 500; }
+        .td-mono { font-family: var(--mono); font-size: 12px; color: var(--accent2) !important; }
+
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+
+        .badge-green { background: rgba(0,201,122,0.15); color: var(--success); }
+        .badge-yellow { background: rgba(245,166,35,0.15); color: var(--warn); }
+        .badge-red { background: rgba(255,77,109,0.15); color: var(--danger); }
+
+        .no-data {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* ===== MODAL ===== */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            z-index: 1000;
+            animation: fadeIn 0.2s ease;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.open { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 28px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.25s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 { font-size: 17px; font-weight: 700; }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 22px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px;
+            transition: color 0.2s;
+        }
+        .close-btn:hover { color: var(--text); }
+
+        /* ===== FORM ===== */
+        .form-group { margin-bottom: 18px; }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: var(--text-muted);
+            margin-bottom: 7px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 9px 12px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: var(--font);
+            font-size: 13px;
+            color: var(--text);
+            transition: border-color 0.2s;
+            appearance: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(79,124,255,0.12);
+        }
+
+        .form-group select option { background: var(--surface2); }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 24px;
+            justify-content: flex-end;
+        }
+
+        /* ===== CHARTS ===== */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+        }
+
+        .chart-card.full { grid-column: 1 / -1; }
+
+        .chart-card h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 18px;
+        }
+
+        .chart-card canvas { max-height: 280px; }
+
+        /* ===== REPORT ===== */
+        .report-kpis {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .report-kpi {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .report-kpi-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .report-kpi-val {
+            font-family: var(--mono);
+            font-size: 28px;
+            font-weight: 500;
+        }
+
+        .report-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 22px;
+            margin-bottom: 16px;
+        }
+
+        .report-section h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ===== ALERT ===== */
+        .alert {
+            padding: 12px 16px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+
+        .alert-success { background: rgba(0,201,122,0.1); color: var(--success); border: 1px solid rgba(0,201,122,0.2); }
+        .alert-error { background: rgba(255,77,109,0.1); color: var(--danger); border: 1px solid rgba(255,77,109,0.2); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 900px) {
+            .kpi-bar { grid-template-columns: 1fr 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+            .chart-card.full { grid-column: auto; }
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 16px; }
+            .tab-content { padding: 16px; }
+            .kpi-bar { grid-template-columns: 1fr 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+            .tabs { padding: 0 12px; overflow-x: auto; }
+            .tab-btn { padding: 12px 14px; font-size: 12px; }
+        }
+
+        @media print {
+            body { background: white; color: black; }
+            .header, .tabs, .toolbar, .modal { display: none !important; }
+            .tab-content { display: block !important; }
+            .table-wrap { border: 1px solid #ccc; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="header-left">
+        <div class="logo-icon">🛡️</div>
+        <h1>Protetores Auriculares <span>/ Dashboard</span></h1>
+    </div>
+    <div class="header-meta">
+        <div class="meta-item">
+            <div class="meta-label">Última Atualização</div>
+            <div class="meta-value" id="lastUpdate">--:--</div>
+        </div>
+        <div class="meta-item">
+            <div class="meta-label">Registros</div>
+            <div class="meta-value" id="totalRecords">0</div>
+        </div>
+    </div>
+</div>
+
+<!-- KPI BAR -->
+<div class="kpi-bar">
+    <div class="kpi-card green">
+        <div class="kpi-label">No Prazo</div>
+        <div class="kpi-value" id="cardOnTime">0</div>
+        <div class="kpi-sub">Vencimento em dia</div>
+    </div>
+    <div class="kpi-card yellow">
+        <div class="kpi-label">Próx. ao Vencimento</div>
+        <div class="kpi-value" id="cardWarning">0</div>
+        <div class="kpi-sub">Até 15 dias para vencer</div>
+    </div>
+    <div class="kpi-card red">
+        <div class="kpi-label">Vencidos</div>
+        <div class="kpi-value" id="cardExpired">0</div>
+        <div class="kpi-sub">Troca imediata</div>
+    </div>
+    <div class="kpi-card blue">
+        <div class="kpi-label">Trabalhadores</div>
+        <div class="kpi-value" id="cardWorkers">0</div>
+        <div class="kpi-sub">Registrados no sistema</div>
+    </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab-btn active" data-tab="registros">📋 Registros</button>
+    <button class="tab-btn" data-tab="graficos">📊 Gráficos</button>
+    <button class="tab-btn" data-tab="relatorio">📄 Relatório</button>
+    <button class="tab-btn" data-tab="gestores">👥 Gestores</button>
+</div>
+
+<!-- TAB: REGISTROS -->
+<div id="registros" class="tab-content active">
+    <div class="toolbar">
+        <button class="btn btn-primary" onclick="openModal('record')">+ Novo Registro</button>
+        <button class="btn btn-success" onclick="exportCSV()">📥 Exportar CSV</button>
+        <button class="btn btn-warning" onclick="window.print()">🖨️ Imprimir</button>
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchRecords" placeholder="Buscar por matrícula, nome ou setor…" oninput="renderRecords()">
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Nome</th>
+                    <th>Setor</th>
+                    <th>Data Troca</th>
+                    <th>Próx. Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="recordsBody">
+                <tr><td colspan="7" class="no-data">Nenhum registro. Clique em "Novo Registro" para começar.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- TAB: GRÁFICOS -->
+<div id="graficos" class="tab-content">
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>Status dos Protetores</h3>
+            <canvas id="statusChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Distribuição por Setor</h3>
+            <canvas id="sectorChart"></canvas>
+        </div>
+        <div class="chart-card full">
+            <h3>Evolução de Registros (Últimos 30 dias)</h3>
+            <canvas id="evolutionChart"></canvas>
+        </div>
+        <div class="chart-card full">
+            <h3>Vencimentos por Setor</h3>
+            <canvas id="expirationChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- TAB: RELATÓRIO -->
+<div id="relatorio" class="tab-content">
+    <div class="toolbar">
+        <button class="btn btn-primary" onclick="generateReport()">🔄 Gerar Relatório</button>
+        <button class="btn btn-success" onclick="window.print()">📄 Imprimir PDF</button>
+    </div>
+    <div id="reportContent">
+        <div class="no-data">Clique em "Gerar Relatório" para visualizar os dados.</div>
+    </div>
+</div>
+
+<!-- TAB: GESTORES -->
+<div id="gestores" class="tab-content">
+    <div class="toolbar">
+        <button class="btn btn-primary" onclick="openModal('manager')">+ Adicionar Gestor</button>
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchManagers" placeholder="Buscar por matrícula, nome ou setor…" oninput="renderManagers()">
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Matrícula</th>
+                    <th>Nome</th>
+                    <th>Setor</th>
+                    <th>Contato</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="managersBody">
+                <tr><td colspan="5" class="no-data">Nenhum gestor cadastrado.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL: REGISTRO -->
+<div id="recordModal" class="modal" onclick="handleModalClick(event, 'recordModal')">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="recordModalTitle">Novo Registro</h2>
+            <button class="close-btn" onclick="closeModal('recordModal')">&times;</button>
+        </div>
+        <div id="recordAlert"></div>
+        <form id="recordForm" onsubmit="submitRecord(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="r_matricula">Matrícula *</label>
+                    <input type="text" id="r_matricula" required placeholder="Ex: MAT001">
+                </div>
+                <div class="form-group">
+                    <label for="r_nome">Nome *</label>
+                    <input type="text" id="r_nome" required placeholder="Nome completo">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="r_setor">Setor *</label>
+                <select id="r_setor" required>
+                    <option value="">Selecione um setor</option>
+                    <option>Fabricação de Açúcar</option>
+                    <option>Manutenção Mecânica</option>
+                    <option>Oficina Mecânica</option>
+                    <option>Laboratório</option>
+                    <option>Almoxarifado</option>
+                    <option>Gerência/Administrativo</option>
+                    <option>Segurança Patrimonial</option>
+                    <option>Manutenção Civil</option>
+                    <option>Caldeiras</option>
+                    <option>Caldeiraria</option>
+                    <option>Destilaria</option>
+                    <option>Manutenção Predial</option>
+                    <option>Moendas</option>
+                    <option>Oficina Elétrica</option>
+                    <option>P.C.M.I.</option>
+                    <option>Centrífuga de Açúcar</option>
+                    <option>Pátio de Cana</option>
+                    <option>Segurança do Trabalho</option>
+                    <option>Fábrica de Briquetes</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="r_dataTroca">Data de Troca *</label>
+                    <input type="date" id="r_dataTroca" required onchange="autoFillDueDate()">
+                </div>
+                <div class="form-group">
+                    <label for="r_vencimento">Próximo Vencimento</label>
+                    <input type="date" id="r_vencimento">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('recordModal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: GESTOR -->
+<div id="managerModal" class="modal" onclick="handleModalClick(event, 'managerModal')">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2 id="managerModalTitle">Novo Gestor</h2>
+            <button class="close-btn" onclick="closeModal('managerModal')">&times;</button>
+        </div>
+        <form id="managerForm" onsubmit="submitManager(event)">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="m_matricula">Matrícula *</label>
+                    <input type="text" id="m_matricula" required placeholder="Ex: GES001">
+                </div>
+                <div class="form-group">
+                    <label for="m_nome">Nome *</label>
+                    <input type="text" id="m_nome" required placeholder="Nome completo">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="m_setor">Setor *</label>
+                <select id="m_setor" required>
+                    <option value="">Selecione um setor</option>
+                    <option>Fabricação de Açúcar</option>
+                    <option>Manutenção Mecânica</option>
+                    <option>Oficina Mecânica</option>
+                    <option>Laboratório</option>
+                    <option>Almoxarifado</option>
+                    <option>Gerência/Administrativo</option>
+                    <option>Segurança Patrimonial</option>
+                    <option>Manutenção Civil</option>
+                    <option>Caldeiras</option>
+                    <option>Caldeiraria</option>
+                    <option>Destilaria</option>
+                    <option>Manutenção Predial</option>
+                    <option>Moendas</option>
+                    <option>Oficina Elétrica</option>
+                    <option>P.C.M.I.</option>
+                    <option>Centrífuga de Açúcar</option>
+                    <option>Pátio de Cana</option>
+                    <option>Segurança do Trabalho</option>
+                    <option>Fábrica de Briquetes</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="m_contato">Contato</label>
+                <input type="text" id="m_contato" placeholder="E-mail ou telefone">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('managerModal')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let records  = [];
+let managers = [];
+let editingRecordId  = null;
+let editingManagerId = null;
+let charts   = {};
+
+const SECTORS = [
+    'Fabricação de Açúcar','Manutenção Mecânica','Oficina Mecânica','Laboratório',
+    'Almoxarifado','Gerência/Administrativo','Segurança Patrimonial','Manutenção Civil',
+    'Caldeiras','Caldeiraria','Destilaria','Manutenção Predial','Moendas',
+    'Oficina Elétrica','P.C.M.I.','Centrífuga de Açúcar','Pátio de Cana',
+    'Segurança do Trabalho','Fábrica de Briquetes'
+];
+
+// ============================================================
+// STORAGE (com tratamento de erro)
+// ============================================================
+function load(key, fallback = []) {
+    try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+        console.warn('Erro ao carregar', key, e);
+        return fallback;
+    }
+}
+
+function save(key, data) {
+    try {
+        localStorage.setItem(key, JSON.stringify(data));
+    } catch (e) {
+        console.warn('Erro ao salvar', key, e);
+    }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+    records  = load('protetores_records');
+    managers = load('protetores_managers');
+
+    // Tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => switchTab(e.currentTarget.dataset.tab, e.currentTarget));
+    });
+
+    updateDashboard();
+    updateLastUpdateTime();
+    setInterval(updateLastUpdateTime, 60000);
+});
+
+// ============================================================
+// TABS
+// ============================================================
+function switchTab(tabId, btnEl) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btnEl.classList.add('active');
+
+    if (tabId === 'graficos') setTimeout(updateCharts, 120);
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(type) {
+    if (type === 'record') {
+        editingRecordId = null;
+        document.getElementById('recordModalTitle').textContent = 'Novo Registro';
+        document.getElementById('recordForm').reset();
+        document.getElementById('recordAlert').innerHTML = '';
+        document.getElementById('recordModal').classList.add('open');
+    } else {
+        editingManagerId = null;
+        document.getElementById('managerModalTitle').textContent = 'Novo Gestor';
+        document.getElementById('managerForm').reset();
+        document.getElementById('managerModal').classList.add('open');
+    }
+}
+
+function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+}
+
+function handleModalClick(e, id) {
+    if (e.target === document.getElementById(id)) closeModal(id);
+}
+
+// ============================================================
+// RECORDS CRUD
+// ============================================================
+function submitRecord(e) {
+    e.preventDefault();
+    const rec = {
+        matricula: document.getElementById('r_matricula').value.trim(),
+        nome:      document.getElementById('r_nome').value.trim(),
+        setor:     document.getElementById('r_setor').value,
+        dataTroca: document.getElementById('r_dataTroca').value,
+        vencimento: document.getElementById('r_vencimento').value,
+    };
+
+    if (editingRecordId !== null) {
+        const idx = records.findIndex(r => r.id === editingRecordId);
+        if (idx !== -1) records[idx] = { ...records[idx], ...rec };
+        editingRecordId = null;
+    } else {
+        rec.id = Date.now();
+        rec.criadoEm = new Date().toISOString();
+        records.push(rec);
+    }
+
+    save('protetores_records', records);
+    closeModal('recordModal');
+    updateDashboard();
+}
+
+function editRecord(id) {
+    const r = records.find(r => r.id === id);
+    if (!r) return;
+    editingRecordId = id;
+    document.getElementById('recordModalTitle').textContent = 'Editar Registro';
+    document.getElementById('r_matricula').value = r.matricula;
+    document.getElementById('r_nome').value      = r.nome;
+    document.getElementById('r_setor').value     = r.setor;
+    document.getElementById('r_dataTroca').value  = r.dataTroca;
+    document.getElementById('r_vencimento').value = r.vencimento;
+    document.getElementById('recordAlert').innerHTML = '';
+    document.getElementById('recordModal').classList.add('open');
+}
+
+function deleteRecord(id) {
+    if (!confirm('Excluir este registro?')) return;
+    records = records.filter(r => r.id !== id);
+    save('protetores_records', records);
+    updateDashboard();
+}
+
+// ============================================================
+// MANAGERS CRUD
+// ============================================================
+function submitManager(e) {
+    e.preventDefault();
+    const mgr = {
+        matricula: document.getElementById('m_matricula').value.trim(),
+        nome:      document.getElementById('m_nome').value.trim(),
+        setor:     document.getElementById('m_setor').value,
+        contato:   document.getElementById('m_contato').value.trim(),
+    };
+
+    if (editingManagerId !== null) {
+        const idx = managers.findIndex(m => m.id === editingManagerId);
+        if (idx !== -1) managers[idx] = { ...managers[idx], ...mgr };
+        editingManagerId = null;
+    } else {
+        mgr.id = Date.now();
+        managers.push(mgr);
+    }
+
+    save('protetores_managers', managers);
+    closeModal('managerModal');
+    renderManagers();
+}
+
+function editManager(id) {
+    const m = managers.find(m => m.id === id);
+    if (!m) return;
+    editingManagerId = id;
+    document.getElementById('managerModalTitle').textContent = 'Editar Gestor';
+    document.getElementById('m_matricula').value = m.matricula;
+    document.getElementById('m_nome').value      = m.nome;
+    document.getElementById('m_setor').value     = m.setor;
+    document.getElementById('m_contato').value   = m.contato || '';
+    document.getElementById('managerModal').classList.add('open');
+}
+
+function deleteManager(id) {
+    if (!confirm('Excluir este gestor?')) return;
+    managers = managers.filter(m => m.id !== id);
+    save('protetores_managers', managers);
+    renderManagers();
+}
+
+// ============================================================
+// AUTO-FILL
+// ============================================================
+function autoFillDueDate() {
+    const dt = document.getElementById('r_dataTroca').value;
+    if (!dt) return;
+    const d = new Date(dt + 'T00:00:00');
+    d.setDate(d.getDate() + 60);
+    document.getElementById('r_vencimento').value = d.toISOString().split('T')[0];
+}
+
+// ============================================================
+// STATUS
+// ============================================================
+function getStatus(vencimento) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const due   = new Date(vencimento + 'T00:00:00');
+    const diff  = Math.floor((due - today) / 86400000);
+    if (diff < 0)  return { cls: 'badge-red',    txt: 'Vencido',   kpi: 'expired' };
+    if (diff <= 15) return { cls: 'badge-yellow', txt: 'Atenção',   kpi: 'warning' };
+    return             { cls: 'badge-green',  txt: 'No Prazo', kpi: 'onTime'  };
+}
+
+// ============================================================
+// RENDER RECORDS TABLE
+// ============================================================
+function renderRecords() {
+    const q    = (document.getElementById('searchRecords').value || '').toLowerCase();
+    const body = document.getElementById('recordsBody');
+    const list = records.filter(r =>
+        r.matricula.toLowerCase().includes(q) ||
+        r.nome.toLowerCase().includes(q) ||
+        r.setor.toLowerCase().includes(q)
+    );
+
+    if (!list.length) {
+        body.innerHTML = `<tr><td colspan="7" class="no-data">Nenhum registro encontrado.</td></tr>`;
+        return;
+    }
+
+    body.innerHTML = list.map(r => {
+        const s = getStatus(r.vencimento);
+        return `
+        <tr>
+            <td class="td-mono">${r.matricula}</td>
+            <td class="td-main">${r.nome}</td>
+            <td>${r.setor}</td>
+            <td>${fmtDate(r.dataTroca)}</td>
+            <td>${fmtDate(r.vencimento)}</td>
+            <td><span class="badge ${s.cls}">${s.txt}</span></td>
+            <td>
+                <div style="display:flex;gap:6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="editRecord(${r.id})">✏️ Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">🗑️</button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// ============================================================
+// RENDER MANAGERS TABLE
+// ============================================================
+function renderManagers() {
+    const q    = (document.getElementById('searchManagers').value || '').toLowerCase();
+    const body = document.getElementById('managersBody');
+    const list = managers.filter(m =>
+        m.matricula.toLowerCase().includes(q) ||
+        m.nome.toLowerCase().includes(q) ||
+        m.setor.toLowerCase().includes(q)
+    );
+
+    if (!list.length) {
+        body.innerHTML = `<tr><td colspan="5" class="no-data">Nenhum gestor cadastrado.</td></tr>`;
+        return;
+    }
+
+    body.innerHTML = list.map(m => `
+        <tr>
+            <td class="td-mono">${m.matricula}</td>
+            <td class="td-main">${m.nome}</td>
+            <td>${m.setor}</td>
+            <td>${m.contato || '—'}</td>
+            <td>
+                <div style="display:flex;gap:6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="editManager(${m.id})">✏️ Editar</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteManager(${m.id})">🗑️</button>
+                </div>
+            </td>
+        </tr>`
+    ).join('');
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function updateDashboard() {
+    let onTime = 0, warning = 0, expired = 0;
+    records.forEach(r => {
+        const s = getStatus(r.vencimento);
+        if (s.kpi === 'onTime')  onTime++;
+        else if (s.kpi === 'warning') warning++;
+        else expired++;
+    });
+
+    document.getElementById('cardOnTime').textContent  = onTime;
+    document.getElementById('cardWarning').textContent = warning;
+    document.getElementById('cardExpired').textContent = expired;
+    document.getElementById('cardWorkers').textContent = records.length;
+    document.getElementById('totalRecords').textContent = records.length;
+
+    renderRecords();
+    renderManagers();
+}
+
+// ============================================================
+// CHARTS
+// ============================================================
+const CHART_DEFAULTS = {
+    color: '#e8ecf5',
+    grid:  '#2a2f42',
+};
+
+Chart.defaults.color = CHART_DEFAULTS.color;
+
+function destroyChart(key) {
+    if (charts[key]) { charts[key].destroy(); delete charts[key]; }
+}
+
+function updateCharts() {
+    updateStatusChart();
+    updateSectorChart();
+    updateEvolutionChart();
+    updateExpirationChart();
+}
+
+function updateStatusChart() {
+    destroyChart('status');
+    let on = 0, warn = 0, exp = 0;
+    records.forEach(r => {
+        const s = getStatus(r.vencimento);
+        if (s.kpi === 'onTime') on++;
+        else if (s.kpi === 'warning') warn++;
+        else exp++;
+    });
+
+    charts.status = new Chart(document.getElementById('statusChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['No Prazo','Atenção','Vencido'],
+            datasets: [{ data: [on, warn, exp],
+                backgroundColor: ['#00c97a','#f5a623','#ff4d6d'],
+                borderColor: '#181c27', borderWidth: 3 }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+}
+
+function updateSectorChart() {
+    destroyChart('sector');
+    const data = {};
+    records.forEach(r => { data[r.setor] = (data[r.setor] || 0) + 1; });
+    const labels = Object.keys(data);
+
+    charts.sector = new Chart(document.getElementById('sectorChart'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [{ label: 'Qtd.', data: Object.values(data),
+                backgroundColor: '#4f7cff', borderRadius: 4 }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: CHART_DEFAULTS.grid } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+function updateEvolutionChart() {
+    destroyChart('evolution');
+    const buckets = {};
+    const today   = new Date();
+
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        buckets[d.toISOString().split('T')[0]] = 0;
+    }
+
+    records.forEach(r => {
+        const k = (r.criadoEm || '').split('T')[0];
+        if (k in buckets) buckets[k]++;
+    });
+
+    const labels  = Object.keys(buckets).map(d => d.split('-').reverse().join('/'));
+    let cum = 0;
+    const cumData = Object.values(buckets).map(v => (cum += v));
+
+    charts.evolution = new Chart(document.getElementById('evolutionChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Acumulado',
+                data: cumData,
+                borderColor: '#4f7cff',
+                backgroundColor: 'rgba(79,124,255,0.08)',
+                borderWidth: 2, fill: true, tension: 0.4,
+                pointBackgroundColor: '#4f7cff',
+                pointBorderColor: '#181c27', pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true, grid: { color: CHART_DEFAULTS.grid } },
+                x: { grid: { color: CHART_DEFAULTS.grid } }
+            }
+        }
+    });
+}
+
+function updateExpirationChart() {
+    destroyChart('expiration');
+    const byS = {};
+    records.forEach(r => {
+        if (!byS[r.setor]) byS[r.setor] = { on: 0, warn: 0, exp: 0 };
+        const s = getStatus(r.vencimento);
+        if (s.kpi === 'onTime') byS[r.setor].on++;
+        else if (s.kpi === 'warning') byS[r.setor].warn++;
+        else byS[r.setor].exp++;
+    });
+
+    const sectors = Object.keys(byS);
+
+    charts.expiration = new Chart(document.getElementById('expirationChart'), {
+        type: 'bar',
+        data: {
+            labels: sectors,
+            datasets: [
+                { label: 'No Prazo', data: sectors.map(s => byS[s].on),   backgroundColor: '#00c97a', borderRadius: 4 },
+                { label: 'Atenção',  data: sectors.map(s => byS[s].warn), backgroundColor: '#f5a623', borderRadius: 4 },
+                { label: 'Vencido',  data: sectors.map(s => byS[s].exp),  backgroundColor: '#ff4d6d', borderRadius: 4 },
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { beginAtZero: true, grid: { color: CHART_DEFAULTS.grid } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// ============================================================
+// REPORT
+// ============================================================
+function generateReport() {
+    if (!records.length) {
+        document.getElementById('reportContent').innerHTML =
+            '<div class="no-data">Nenhum registro para gerar relatório.</div>';
+        return;
+    }
+
+    let on = 0, warn = 0, exp = 0;
+    const bySector = {};
+    records.forEach(r => {
+        const s = getStatus(r.vencimento);
+        if (s.kpi === 'onTime') on++;
+        else if (s.kpi === 'warning') warn++;
+        else exp++;
+        if (!bySector[r.setor]) bySector[r.setor] = { on:0, warn:0, exp:0 };
+        if (s.kpi === 'onTime') bySector[r.setor].on++;
+        else if (s.kpi === 'warning') bySector[r.setor].warn++;
+        else bySector[r.setor].exp++;
+    });
+
+    document.getElementById('reportContent').innerHTML = `
+    <div class="report-kpis">
+        <div class="report-kpi"><div class="report-kpi-label">Total</div><div class="report-kpi-val">${records.length}</div></div>
+        <div class="report-kpi"><div class="report-kpi-label">No Prazo</div><div class="report-kpi-val" style="color:var(--success)">${on}</div></div>
+        <div class="report-kpi"><div class="report-kpi-label">Atenção</div><div class="report-kpi-val" style="color:var(--warn)">${warn}</div></div>
+        <div class="report-kpi"><div class="report-kpi-label">Vencido</div><div class="report-kpi-val" style="color:var(--danger)">${exp}</div></div>
+    </div>
+    <div class="report-section">
+        <h3>🏭 Por Setor</h3>
+        <div class="table-wrap">
+        <table><thead><tr><th>Setor</th><th>No Prazo</th><th>Atenção</th><th>Vencido</th><th>Total</th></tr></thead>
+        <tbody>${Object.entries(bySector).map(([s, d]) => `
+            <tr>
+                <td class="td-main">${s}</td>
+                <td style="color:var(--success);font-weight:600">${d.on}</td>
+                <td style="color:var(--warn);font-weight:600">${d.warn}</td>
+                <td style="color:var(--danger);font-weight:600">${d.exp}</td>
+                <td>${d.on+d.warn+d.exp}</td>
+            </tr>`).join('')}
+        </tbody></table></div>
+    </div>
+    <div class="report-section">
+        <h3>👥 Registros Detalhados</h3>
+        <div class="table-wrap">
+        <table><thead><tr><th>Matrícula</th><th>Nome</th><th>Setor</th><th>Data Troca</th><th>Vencimento</th><th>Status</th></tr></thead>
+        <tbody>${records.map(r => {
+            const s = getStatus(r.vencimento);
+            return `<tr>
+                <td class="td-mono">${r.matricula}</td>
+                <td class="td-main">${r.nome}</td>
+                <td>${r.setor}</td>
+                <td>${fmtDate(r.dataTroca)}</td>
+                <td>${fmtDate(r.vencimento)}</td>
+                <td><span class="badge ${s.cls}">${s.txt}</span></td>
+            </tr>`;
+        }).join('')}
+        </tbody></table></div>
+    </div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:12px">
+        Gerado em: ${new Date().toLocaleString('pt-BR')}
+    </p>`;
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+function exportCSV() {
+    if (!records.length) { alert('Nenhum registro para exportar.'); return; }
+
+    const header = 'Matrícula,Nome,Setor,Data de Troca,Próximo Vencimento,Status';
+    const rows   = records.map(r => {
+        const s = getStatus(r.vencimento).txt;
+        return `"${r.matricula}","${r.nome}","${r.setor}","${r.dataTroca}","${r.vencimento}","${s}"`;
+    });
+
+    const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = `protetores_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+// ============================================================
+// UTILITIES
+// ============================================================
+function fmtDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('pt-BR');
+}
+
+function updateLastUpdateTime() {
+    const now = new Date();
+    document.getElementById('lastUpdate').textContent =
+        now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        + ' · ' +
+        now.toLocaleDateString('pt-BR');
+}
+</script>
+</body>
+</html>
